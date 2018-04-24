@@ -1,0 +1,1 @@
+g++ -o raytrace -O0 *.cpp ../lodepng/lodepng.cpp -std=c++11
