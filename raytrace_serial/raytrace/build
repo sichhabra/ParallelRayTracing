@@ -1,1 +1,1 @@
-g++ -o raytrace -O0 *.cpp ../lodepng/lodepng.cpp -std=c++11
+g++ -o raytrace -O0 *.cpp ../lodepng/lodepng.cpp -fcilkplus -std=c++11

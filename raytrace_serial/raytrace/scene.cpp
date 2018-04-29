@@ -32,6 +32,7 @@
 #include <fstream>
 #include <iostream>
 #include "imager.h"
+#include <cilk/cilk.h>
 #include "../lodepng/lodepng.h"
 
 namespace Imager
@@ -821,9 +822,9 @@ namespace Imager
 #endif
 
         // Go back and "heal" ambiguous pixels as best we can.
-        PixelList::const_iterator iter = ambiguousPixelList.begin();
+        //PixelList::const_iterator iter = ambiguousPixelList.begin();
         PixelList::const_iterator end  = ambiguousPixelList.end();
-        for (; iter != end; ++iter)
+        cilk_for (PixelList::const_iterator iter = ambiguousPixelList.begin(); iter != end; ++iter)
         {
             const PixelCoordinates& p = *iter;
             ResolveAmbiguousPixel(buffer, p.i, p.j);
