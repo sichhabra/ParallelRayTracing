@@ -34,9 +34,11 @@
 #include "imager.h"
 #include <cilk/cilk.h>
 #include "../lodepng/lodepng.h"
+#include <mutex>
 
 namespace Imager
 {
+    std::mutex colr;
     // Empties out the solidObjectList and destroys/frees 
     // the SolidObjects that were in it.
     void Scene::ClearSolidObjectList()
@@ -255,14 +257,17 @@ namespace Imager
 
                 if (IsSignificant(reflectionColor))
                 {
-                    const Color matteColor = CalculateReflection(
+                    const Color matteColor = /*cilk_spawn*/ CalculateReflection(
                         intersection,
                         direction,
                         refractiveIndex,
                         reflectionColor,
                         recursionDepth);
 
+                    colr.lock();
                     colorSum += matteColor;
+                    colr.unlock();
+                    //cilk_sync;
                 }
             }
         }
@@ -293,9 +298,9 @@ namespace Imager
         Color colorSum(0.0, 0.0, 0.0);
 
         // Iterate through all of the light sources.
-        LightSourceList::const_iterator iter = lightSourceList.begin();
+        //LightSourceList::const_iterator iter = lightSourceList.begin();
         LightSourceList::const_iterator end  = lightSourceList.end();
-        for (; iter != end; ++iter)
+        cilk_for (LightSourceList::const_iterator iter = lightSourceList.begin(); iter != end; ++iter)
         {
             // Each time through the loop, 'source' 
             // will refer to one of the light sources.
@@ -331,7 +336,9 @@ namespace Imager
                     const double intensity = 
                         incidence / direction.MagnitudeSquared();
 
+                    colr.lock();
                     colorSum += intensity * source.color;
+                    colr.unlock();
                 }
             }
         }
