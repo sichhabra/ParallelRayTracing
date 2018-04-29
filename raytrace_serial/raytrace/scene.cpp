@@ -849,9 +849,9 @@ namespace Imager
         std::vector<unsigned char> rgbaBuffer(RGBA_BUFFER_SIZE);
         unsigned rgbaIndex = 0;
         const double patchSize = antiAliasFactor * antiAliasFactor;
-        cilk_for (size_t j=0; j < pixelsHigh; ++j)
+        for (size_t j=0; j < pixelsHigh; ++j)
         {
-            cilk_for (size_t i=0; i < pixelsWide; ++i)
+            for (size_t i=0; i < pixelsWide; ++i)
             {
                 Color sum(0.0, 0.0, 0.0);
                 for (size_t di=0; di < antiAliasFactor; ++di)
