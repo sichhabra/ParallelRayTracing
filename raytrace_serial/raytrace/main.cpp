@@ -537,6 +537,7 @@ void MultipleSphereTest()
     scene.AddLightSource(LightSource(Vector(-45.0, +10.0, +50.0), Color(1.0, 1.0, 0.3, 1.0)));
     scene.AddLightSource(LightSource(Vector( +5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5)));
     scene.AddLightSource(LightSource(Vector(+45.0, -10.0, +40.0), Color(0.1, 0.2, 0.1, 0.5)));
+    scene.AddLightSource(LightSource(Vector( -5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5)));
 
     const char* filename = "multisphere.png";
     scene.SaveImage(filename, 400, 300, 10.0, 1);
@@ -639,14 +640,27 @@ void ChessBoardTest()
 }
 
 void SerialTest(){
+using namespace Imager;
+    Scene scene(Color(0.0,0.0,0.0));
     auto start = std::chrono::steady_clock::now();
-    SphereTest();
-    CuboidTest();
-    MultipleSphereTest();
-    BitDonutTest();
-    SpheroidTest();
-    CylinderTest();
-    SaturnTest();
+    Cuboid *cuboid = getCuboid();
+    Spheroid *spheroid = getSpheroid();
+    Sphere *shinySphere = getShinySphere();
+    Sphere *shinySphere2 = getShinySphere2();
+    Saturn *saturn = getSaturn();
+    Torus *doubleTorus = getDoubleTorus();
+    scene.AddSolidObject(cuboid);
+    scene.AddSolidObject(spheroid);
+    scene.AddSolidObject(shinySphere);
+    scene.AddSolidObject(shinySphere2);
+    scene.AddSolidObject(saturn);
+    scene.AddSolidObject(doubleTorus);
+    scene.AddLightSource(LightSource(Vector(-45.0, +10.0, +50.0), Color(1.0, 1.0, 0.3, 1.0)));
+    scene.AddLightSource(LightSource(Vector(+45.0, -10.0, +40.0), Color(0.1, 0.2, 0.1, 0.5)));
+    scene.AddLightSource(LightSource(Vector( +5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5), "LS1"));
+    scene.AddLightSource(LightSource(Vector(+75.0, -30.0, +40.0), Color(0.2, 0.5, 0.4, 0.5), "LS2"));
+    const char *filename = "serial.png";
+    scene.SaveImage(filename, 700, 500, 2.0, 1);
     auto end = std::chrono::steady_clock::now();
     double time = (end - start) / std::chrono::milliseconds(1);
     time = (time / 1000.0);
