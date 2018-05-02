@@ -84,6 +84,7 @@ namespace Algebra
     // with the n values from inArray that are real-valued 
     // (i.e., whose imaginary parts are within TOLERANCE of 0.)
     // outArray must be large enough to receive numComplexValues values.
+    int cuda_FilterRealNumbers(int numComplexValues, const complex inArray[], double outArray[]);
     int FilterRealNumbers(
         int numComplexValues, 
         const complex inArray[], 

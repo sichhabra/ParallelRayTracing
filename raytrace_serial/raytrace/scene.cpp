@@ -33,6 +33,10 @@
 #include <iostream>
 #include "imager.h"
 #include "../lodepng/lodepng.h"
+#include <chrono>
+#include <mutex>
+#include <cilk/cilk.h>
+using namespace std;
 
 namespace Imager
 {
@@ -752,36 +756,14 @@ namespace Imager
         // Later we will come back and fix these pixels.
         PixelList ambiguousPixelList;
 
+        auto start1 = std::chrono::steady_clock::now();
+        
         for (size_t i=0; i < largePixelsWide; ++i)
         {
             direction.x = (i - largePixelsWide/2.0) / largeZoom;
             for (size_t j=0; j < largePixelsHigh; ++j)
             {
                 direction.y = (largePixelsHigh/2.0 - j) / largeZoom;
-/*
-#if RAYTRACE_DEBUG_POINTS
-                {
-                    using namespace std;
-
-                    // Assume no active debug point unless we find one below.
-                    activeDebugPoint = NULL;    
-
-                    DebugPointList::const_iterator iter = debugPointList.begin();
-                    DebugPointList::const_iterator end  = debugPointList.end();
-                    for(; iter != end; ++iter)
-                    {
-                        if ((iter->iPixel == i) && (iter->jPixel == j))
-                        {
-                            cout << endl;
-                            cout << "Hit breakpoint at (";
-                            cout << i << ", " << j <<")" << endl;
-                            activeDebugPoint = &(*iter);
-                            break;
-                        }
-                    }
-                }
-#endif
-*/
                 PixelData& pixel = buffer.Pixel(i,j);
                 try
                 {
@@ -814,11 +796,11 @@ namespace Imager
                 }
             }
         }
-
-#if RAYTRACE_DEBUG_POINTS
-        // Leave no chance of a dangling pointer into debug points.
-        activeDebugPoint = NULL;
-#endif
+        
+        auto end1 = std::chrono::steady_clock::now();
+        double time = (end1 - start1) / std::chrono::milliseconds(1);
+        time = (time / 1000.0);
+        std::cout <<"Loop 1 Time "<<time<<endl;
 
         // Go back and "heal" ambiguous pixels as best we can.
         //PixelList::const_iterator iter = ambiguousPixelList.begin();
@@ -848,18 +830,24 @@ namespace Imager
         std::vector<unsigned char> rgbaBuffer(RGBA_BUFFER_SIZE);
         unsigned rgbaIndex = 0;
         const double patchSize = antiAliasFactor * antiAliasFactor;
+        
+        start1 = std::chrono::steady_clock::now();
+        
         for (size_t j=0; j < pixelsHigh; ++j)
         {
             for (size_t i=0; i < pixelsWide; ++i)
             {
                 Color sum(0.0, 0.0, 0.0);
-                for (size_t di=0; di < antiAliasFactor; ++di)
+                mutex colr;
+                cilk_for (size_t di=0; di < antiAliasFactor; ++di)
                 {
                     for (size_t dj=0; dj < antiAliasFactor; ++dj)
                     {
+                        colr.lock();
                         sum += buffer.Pixel(
                             antiAliasFactor*i + di, 
                             antiAliasFactor*j + dj).color;
+                        colr.unlock();
                     }
                 }
                 sum /= patchSize;
@@ -873,6 +861,11 @@ namespace Imager
             }
         }
 
+        end1 = std::chrono::steady_clock::now();
+        time = (end1 - start1) / std::chrono::milliseconds(1);
+        time = (time / 1000.0);
+        std::cout <<"Loop 2 Time "<<time<<endl;
+        
         // Write the PNG file
         const unsigned error = lodepng::encode(
             outPngFileName, 

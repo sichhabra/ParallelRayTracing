@@ -1,1 +1,2 @@
-g++ -o raytrace -O0 *.cpp ../lodepng/lodepng.cpp -fcilkplus -std=c++11
+nvcc -std=c++11 -c -arch=sm_20 --expt-relaxed-constexpr -Wno-deprecated-gpu-targets algebra.cu
+g++ -o raytrace algebra.o *.cpp ../lodepng/lodepng.cpp -fcilkplus -std=c++11 -L/usr/local/cuda/lib64 -lcudart 

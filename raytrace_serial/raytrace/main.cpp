@@ -660,7 +660,7 @@ using namespace Imager;
     scene.AddLightSource(LightSource(Vector( +5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5), "LS1"));
     scene.AddLightSource(LightSource(Vector(+75.0, -30.0, +40.0), Color(0.2, 0.5, 0.4, 0.5), "LS2"));
     const char *filename = "serial.png";
-    scene.SaveImage(filename, 700, 500, 2.0, 1);
+    scene.SaveImage(filename, 700, 500, 2.0, 4);
     auto end = std::chrono::steady_clock::now();
     double time = (end - start) / std::chrono::milliseconds(1);
     time = (time / 1000.0);

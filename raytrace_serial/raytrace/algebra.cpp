@@ -32,6 +32,7 @@
 #include <complex>
 #include <iostream>
 #include "algebra.h"
+using namespace std;
 
 namespace Algebra
 {
@@ -95,9 +96,10 @@ namespace Algebra
     // Returns n=0..numComplexValues, and fills in outArray with the n values from
     // inArray that are real-valued (i.e., whose imaginary parts are within TOLERANCE of 0.)
     // outArray must be large enough to receive numComplexValues values.
+   
     int FilterRealNumbers(int numComplexValues, const complex inArray[], double outArray[])
     {
-        int numRealValues = 0;
+        /*int numRealValues = 0;
         for (int i=0; i < numComplexValues; ++i)
         {
             if (fabs(inArray[i].imag()) < TOLERANCE)
@@ -105,7 +107,8 @@ namespace Algebra
                 outArray[numRealValues++] = inArray[i].real();
             }
         }
-        return numRealValues;
+        return numRealValues;*/
+	    return cuda_FilterRealNumbers(numComplexValues,inArray,outArray);	
     }
 
     // Returns n=0..2, the number of distinct real roots found for the equation
