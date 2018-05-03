@@ -99,7 +99,7 @@ namespace Algebra
    
     int FilterRealNumbers(int numComplexValues, const complex inArray[], double outArray[])
     {
-        /*int numRealValues = 0;
+        int numRealValues = 0;
         for (int i=0; i < numComplexValues; ++i)
         {
             if (fabs(inArray[i].imag()) < TOLERANCE)
@@ -107,8 +107,8 @@ namespace Algebra
                 outArray[numRealValues++] = inArray[i].real();
             }
         }
-        return numRealValues;*/
-	    return cuda_FilterRealNumbers(numComplexValues,inArray,outArray);	
+        return numRealValues;
+	    //return cuda_FilterRealNumbers(numComplexValues,inArray,outArray);	
     }
 
     // Returns n=0..2, the number of distinct real roots found for the equation

@@ -1,32 +1,32 @@
 /*
-    scene.cpp
+   scene.cpp
 
-    Copyright (C) 2013 by Don Cross  -  http://cosinekitty.com/raytrace
+   Copyright (C) 2013 by Don Cross  -  http://cosinekitty.com/raytrace
 
-    This software is provided 'as-is', without any express or implied
-    warranty. In no event will the author be held liable for any damages
-    arising from the use of this software.
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the author be held liable for any damages
+   arising from the use of this software.
 
-    Permission is granted to anyone to use this software for any purpose,
-    including commercial applications, and to alter it and redistribute it
-    freely, subject to the following restrictions:
+   Permission is granted to anyone to use this software for any purpose,
+   including commercial applications, and to alter it and redistribute it
+   freely, subject to the following restrictions:
 
-    1. The origin of this software must not be misrepresented; you must not
-       claim that you wrote the original software. If you use this software
-       in a product, an acknowledgment in the product documentation would be
-       appreciated but is not required.
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
 
-    2. Altered source versions must be plainly marked as such, and must not be
-       misrepresented as being the original software.
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
 
-    3. This notice may not be removed or altered from any source
-       distribution.
+   3. This notice may not be removed or altered from any source
+   distribution.
 
-    -------------------------------------------------------------------------
+   -------------------------------------------------------------------------
 
-    Implements class Scene, which renders a collection of 
-    SolidObjects and LightSources that illuminate them.
-*/
+   Implements class Scene, which renders a collection of 
+   SolidObjects and LightSources that illuminate them.
+   */
 
 #include <cmath>
 #include <fstream>
@@ -74,42 +74,42 @@ namespace Imager
     }
 
     Color Scene::TraceRay(
-        const Vector& vantage,
-        const Vector& direction,
-        double refractiveIndex,
-        Color rayIntensity,
-        int recursionDepth) const
+            const Vector& vantage,
+            const Vector& direction,
+            double refractiveIndex,
+            Color rayIntensity,
+            int recursionDepth) const
     {
         Intersection intersection;
         const int numClosest = FindClosestIntersection(
-            vantage, 
-            direction, 
-            intersection);
+                vantage, 
+                direction, 
+                intersection);
 
         switch (numClosest)
         {
-        case 0:
-            // The ray of light did not hit anything.
-            // Therefore we see the background color attenuated
-            // by the incoming ray intensity.
-            return rayIntensity * backgroundColor;
+            case 0:
+                // The ray of light did not hit anything.
+                // Therefore we see the background color attenuated
+                // by the incoming ray intensity.
+                return rayIntensity * backgroundColor;
 
-        case 1:
-            // The ray of light struck exactly one closest surface.
-            // Determine the lighting using that single intersection.
-            return CalculateLighting(
-                intersection,
-                direction,
-                refractiveIndex,
-                rayIntensity,
-                1 + recursionDepth);
+            case 1:
+                // The ray of light struck exactly one closest surface.
+                // Determine the lighting using that single intersection.
+                return CalculateLighting(
+                        intersection,
+                        direction,
+                        refractiveIndex,
+                        rayIntensity,
+                        1 + recursionDepth);
 
-        default:
-            // There is an ambiguity: more than one intersection
-            // has the same minimum distance.  Caller must catch
-            // this exception and have a backup plan for handling
-            // this ray of light.
-            throw AmbiguousIntersectionException();
+            default:
+                // There is an ambiguity: more than one intersection
+                // has the same minimum distance.  Caller must catch
+                // this exception and have a backup plan for handling
+                // this ray of light.
+                throw AmbiguousIntersectionException();
         }
     }
 
@@ -117,11 +117,11 @@ namespace Imager
     // based on illumination it receives via scattering,
     // glossy reflection, and refraction (lensing).
     Color Scene::CalculateLighting(
-        const Intersection& intersection, 
-        const Vector& direction, 
-        double refractiveIndex,
-        Color rayIntensity,
-        int recursionDepth) const
+            const Intersection& intersection, 
+            const Vector& direction, 
+            double refractiveIndex,
+            Color rayIntensity,
+            int recursionDepth) const
     {
         Color colorSum(0.0, 0.0, 0.0);
 
@@ -136,43 +136,35 @@ namespace Imager
                 const SolidObject& solid = *intersection.solid;
 
                 const Optics optics = solid.SurfaceOptics(
-                    intersection.point, 
-                    intersection.context
-                );
+                        intersection.point, 
+                        intersection.context
+                        );
 
                 const double opacity = optics.GetOpacity();
                 const double transparency = 1.0 - opacity;
-                
+
                 Color matte(0.0,0.0,0.0);
                 Color reflection(0.0,0.0,0.0);
                 Color refraction(0.0,0.0,0.0);
-                
+
                 if (opacity > 0.0)
                 {
                     matte = CalculateMatte(intersection);
-                    const Color matteColor =
-                        opacity * 
-                        optics.GetMatteColor() *
-                        rayIntensity *
-                        matte;
-
-                    colorSum += matteColor;
-
                 }
+
 
                 double refractiveReflectionFactor = 0.0;
                 if (transparency > 0.0)
                 {
                     refraction = CalculateRefraction(
-                        intersection, 
-                        direction,
-                        refractiveIndex,
-                        transparency * rayIntensity,
-                        recursionDepth,
-                        refractiveReflectionFactor  // output parameter
-                    );
+                            intersection, 
+                            direction,
+                            refractiveIndex,
+                            transparency * rayIntensity,
+                            recursionDepth,
+                            refractiveReflectionFactor  // output parameter
+                            );
 
-                    colorSum += refraction;
                 }
 
                 Color reflectionColor (1.0, 1.0, 1.0);
@@ -185,15 +177,25 @@ namespace Imager
                 if (IsSignificant(reflectionColor))
                 {
 
-                    reflection = CalculateReflection(
-                        intersection,
-                        direction,
-                        refractiveIndex,
-                        reflectionColor,
-                        recursionDepth);
+                    reflection = cilk_spawn CalculateReflection(
+                            intersection,
+                            direction,
+                            refractiveIndex,
+                            reflectionColor,
+                            recursionDepth);
 
-                    colorSum += reflection;
                 }
+
+                cilk_sync;
+                const Color matteColor =
+                    opacity * 
+                    optics.GetMatteColor() *
+                    rayIntensity *
+                    matte;
+
+                colorSum += matteColor;
+                colorSum += refraction;
+                colorSum += reflection;
             }
         }
 
@@ -234,9 +236,9 @@ namespace Imager
                 const Vector direction = source.location - intersection.point;
 
                 const double incidence = DotProduct(
-                    intersection.surfaceNormal, 
-                    direction.UnitVector()
-                );
+                        intersection.surfaceNormal, 
+                        direction.UnitVector()
+                        );
 
                 // If the dot product of the surface normal vector and 
                 // the ray toward the light source is negative, it means 
@@ -260,11 +262,11 @@ namespace Imager
 
 
     Color Scene::CalculateReflection(
-        const Intersection& intersection, 
-        const Vector& incidentDir, 
-        double refractiveIndex,
-        Color rayIntensity,
-        int recursionDepth) const
+            const Intersection& intersection, 
+            const Vector& incidentDir, 
+            double refractiveIndex,
+            Color rayIntensity,
+            int recursionDepth) const
     {
         // Find the direction of the reflected ray based on the incident ray 
         // direction and the surface normal vector.  The reflected ray has
@@ -277,20 +279,20 @@ namespace Imager
 
         // Follow the ray in the new direction from the intersection point.
         return TraceRay(
-            intersection.point,
-            reflectDir,
-            refractiveIndex,
-            rayIntensity,
-            recursionDepth);
+                intersection.point,
+                reflectDir,
+                refractiveIndex,
+                rayIntensity,
+                recursionDepth);
     }
 
     Color Scene::CalculateRefraction(
-        const Intersection& intersection, 
-        const Vector& direction, 
-        double sourceRefractiveIndex,
-        Color rayIntensity,
-        int recursionDepth,
-        double& outReflectionFactor) const
+            const Intersection& intersection, 
+            const Vector& direction, 
+            double sourceRefractiveIndex,
+            Color rayIntensity,
+            int recursionDepth,
+            double& outReflectionFactor) const
     {
         // Convert direction to a unit vector so that
         // relation between angle and dot product is simpler.
@@ -386,10 +388,10 @@ namespace Imager
 
         double k[2];
         const int numSolutions = Algebra::SolveQuadraticEquation(
-            1.0,
-            2.0 * cos_a1,
-            1.0 - 1.0/(ratio*ratio),
-            k);
+                1.0,
+                2.0 * cos_a1,
+                1.0 - 1.0/(ratio*ratio),
+                k);
 
         // There are generally 2 solutions for k, but only 
         // one of them is correct.  The right answer is the
@@ -441,16 +443,16 @@ namespace Imager
         // and therefore average the contributions of s-polarized
         // and p-polarized light.
         const double Rs = PolarizedReflection(
-            sourceRefractiveIndex,
-            targetRefractiveIndex,
-            cos_a1,
-            cos_a2);
+                sourceRefractiveIndex,
+                targetRefractiveIndex,
+                cos_a1,
+                cos_a2);
 
         const double Rp = PolarizedReflection(
-            sourceRefractiveIndex,
-            targetRefractiveIndex,
-            cos_a2,
-            cos_a1);
+                sourceRefractiveIndex,
+                targetRefractiveIndex,
+                cos_a2,
+                cos_a1);
 
         outReflectionFactor = (Rs + Rp) / 2.0;
 
@@ -462,18 +464,18 @@ namespace Imager
 
         // Follow the ray in the new direction from the intersection point.
         return TraceRay(
-            intersection.point,
-            refractDir,
-            targetRefractiveIndex,
-            nextRayIntensity,
-            recursionDepth);
+                intersection.point,
+                refractDir,
+                targetRefractiveIndex,
+                nextRayIntensity,
+                recursionDepth);
     }
 
     double Scene::PolarizedReflection(
-        double n1,              // source material's index of refraction
-        double n2,              // target material's index of refraction
-        double cos_a1,          // incident or outgoing ray angle cosine
-        double cos_a2) const    // outgoing or incident ray angle cosine
+            double n1,              // source material's index of refraction
+            double n2,              // target material's index of refraction
+            double cos_a1,          // incident or outgoing ray angle cosine
+            double cos_a2) const    // outgoing or incident ray angle cosine
     {
         const double left  = n1 * cos_a1;
         const double right = n2 * cos_a2;
@@ -495,8 +497,8 @@ namespace Imager
     }
 
     int PickClosestIntersection(
-        const IntersectionList& list, 
-        Intersection& intersection)
+            const IntersectionList& list, 
+            Intersection& intersection)
     {
         // We pick the closest intersection, but we return
         // the number of intersections tied for first place
@@ -506,49 +508,49 @@ namespace Imager
         const size_t count = list.size();
         switch (count)
         {
-        case 0:
-            // No intersection is available.
-            // We leave 'intersection' unmodified.
-            // The caller must check the return value 
-            // to know to avoid using 'intersection'.
-            return 0;
+            case 0:
+                // No intersection is available.
+                // We leave 'intersection' unmodified.
+                // The caller must check the return value 
+                // to know to avoid using 'intersection'.
+                return 0;
 
-        case 1:
-            // There is exactly one intersection
-            // in the given direction, so there is 
-            // no need to think very hard; just use it!
-            intersection = list[0];
-            return 1;
+            case 1:
+                // There is exactly one intersection
+                // in the given direction, so there is 
+                // no need to think very hard; just use it!
+                intersection = list[0];
+                return 1;
 
-        default:
-            // There are 2 or more intersections, so we need
-            // to find the closest one, and look for ties.
-            IntersectionList::const_iterator iter = list.begin();
-            IntersectionList::const_iterator end  = list.end();
-            IntersectionList::const_iterator closest = iter;
-            int tieCount = 1;
-            for (++iter; iter != end; ++iter)
-            {
-                const double diff = iter->distanceSquared - closest->distanceSquared;
-                if (fabs(diff) < EPSILON)
+            default:
+                // There are 2 or more intersections, so we need
+                // to find the closest one, and look for ties.
+                IntersectionList::const_iterator iter = list.begin();
+                IntersectionList::const_iterator end  = list.end();
+                IntersectionList::const_iterator closest = iter;
+                int tieCount = 1;
+                for (++iter; iter != end; ++iter)
                 {
-                    // Within tolerance of the closest so far, 
-                    // so consider this a tie.
-                    ++tieCount;
+                    const double diff = iter->distanceSquared - closest->distanceSquared;
+                    if (fabs(diff) < EPSILON)
+                    {
+                        // Within tolerance of the closest so far, 
+                        // so consider this a tie.
+                        ++tieCount;
+                    }
+                    else if (diff < 0.0)
+                    {
+                        // This new intersection is definitely closer 
+                        // to the vantage point.
+                        tieCount = 1;
+                        closest = iter;
+                    }
                 }
-                else if (diff < 0.0)
-                {
-                    // This new intersection is definitely closer 
-                    // to the vantage point.
-                    tieCount = 1;
-                    closest = iter;
-                }
-            }
-            intersection = *closest;
+                intersection = *closest;
 
-            // The caller may need to know if there was an ambiguity,
-            // so report back the total number of closest intersections.
-            return tieCount;
+                // The caller may need to know if there was an ambiguity,
+                // so report back the total number of closest intersections.
+                return tieCount;
         }
     }
 
@@ -565,9 +567,9 @@ namespace Imager
     // it means the 'intersection' parameter has been filled in with the
     // closest intersection (or one of the equally closest intersections).
     int Scene::FindClosestIntersection(
-        const Vector& vantage, 
-        const Vector& direction, 
-        Intersection& intersection) const
+            const Vector& vantage, 
+            const Vector& direction, 
+            Intersection& intersection) const
     {
         // Build a list of all intersections from all objects.
         cachedIntersectionList.clear();     // empty any previous contents
@@ -577,9 +579,9 @@ namespace Imager
         {
             const SolidObject& solid = *(*iter);
             solid.AppendAllIntersections(
-                vantage, 
-                direction, 
-                cachedIntersectionList);
+                    vantage, 
+                    direction, 
+                    cachedIntersectionList);
         }
         return PickClosestIntersection(cachedIntersectionList, intersection);
     }
@@ -587,8 +589,8 @@ namespace Imager
 
     // Returns true if nothing blocks a line drawn between point1 and point2.
     bool Scene::HasClearLineOfSight(
-        const Vector& point1, 
-        const Vector& point2) const
+            const Vector& point1, 
+            const Vector& point2) const
     {
         // Subtract point2 from point1 to obtain the direction
         // from point1 to point2, along with the square of
@@ -642,11 +644,11 @@ namespace Imager
     // Generally, antiAliasFactor should be between 1 (fastest, but jagged)
     // and 4 (16 times slower, but very smooth looking).
     void Scene::SaveImage(
-        const char *outPngFileName, 
-        size_t pixelsWide, 
-        size_t pixelsHigh, 
-        double zoom, 
-        size_t antiAliasFactor) const
+            const char *outPngFileName, 
+            size_t pixelsWide, 
+            size_t pixelsHigh, 
+            double zoom, 
+            size_t antiAliasFactor) const
     {
         // Oversample the image using the anti-aliasing factor.
         const size_t largePixelsWide = antiAliasFactor * pixelsWide;
@@ -673,7 +675,7 @@ namespace Imager
         PixelList ambiguousPixelList;
 
         auto start1 = std::chrono::steady_clock::now();
-        
+
         for (size_t i=0; i < largePixelsWide; ++i)
         {
             direction.x = (i - largePixelsWide/2.0) / largeZoom;
@@ -686,11 +688,11 @@ namespace Imager
                     // Trace a ray from the camera toward the given direction
                     // to figure out what color to assign to this pixel.
                     pixel.color = TraceRay(
-                        camera,
-                        direction,
-                        ambientRefraction,
-                        fullIntensity,
-                        0);
+                            camera,
+                            direction,
+                            ambientRefraction,
+                            fullIntensity,
+                            0);
                 }
                 catch (AmbiguousIntersectionException)
                 {
@@ -712,7 +714,7 @@ namespace Imager
                 }
             }
         }
-        
+
         auto end1 = std::chrono::steady_clock::now();
         double time = (end1 - start1) / std::chrono::milliseconds(1);
         time = (time / 1000.0);
@@ -746,9 +748,9 @@ namespace Imager
         std::vector<unsigned char> rgbaBuffer(RGBA_BUFFER_SIZE);
         unsigned rgbaIndex = 0;
         const double patchSize = antiAliasFactor * antiAliasFactor;
-        
+
         start1 = std::chrono::steady_clock::now();
-        
+
         for (size_t j=0; j < pixelsHigh; ++j)
         {
             for (size_t i=0; i < pixelsWide; ++i)
@@ -761,8 +763,8 @@ namespace Imager
                     {
                         colr.lock();
                         sum += buffer.Pixel(
-                            antiAliasFactor*i + di, 
-                            antiAliasFactor*j + dj).color;
+                                antiAliasFactor*i + di, 
+                                antiAliasFactor*j + dj).color;
                         colr.unlock();
                     }
                 }
@@ -781,13 +783,13 @@ namespace Imager
         time = (end1 - start1) / std::chrono::milliseconds(1);
         time = (time / 1000.0);
         std::cout <<"Loop 2 Time "<<time<<endl;
-        
+
         // Write the PNG file
         const unsigned error = lodepng::encode(
-            outPngFileName, 
-            rgbaBuffer, 
-            pixelsWide, 
-            pixelsHigh);
+                outPngFileName, 
+                rgbaBuffer, 
+                pixelsWide, 
+                pixelsHigh);
 
         // If there was an encoding error, throw an exception.
         if (error != 0)
@@ -822,9 +824,9 @@ namespace Imager
     }
 
     void Scene::ResolveAmbiguousPixel(
-        ImageBuffer& buffer, 
-        size_t i, 
-        size_t j) const
+            ImageBuffer& buffer, 
+            size_t i, 
+            size_t j) const
     {
         // This function is called whenever SaveImage could not
         // figure out what color to assign to a pixel, because
