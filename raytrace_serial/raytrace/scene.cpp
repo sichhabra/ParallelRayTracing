@@ -125,105 +125,45 @@ namespace Imager
     {
         Color colorSum(0.0, 0.0, 0.0);
 
-#if RAYTRACE_DEBUG_POINTS
-        if (activeDebugPoint)
-        {
-            using namespace std;
-
-            Indent(cout, recursionDepth);
-            cout << "CalculateLighting[" << recursionDepth << "] {" << endl;
-
-            Indent(cout, 1+recursionDepth);
-            cout << intersection << endl;
-
-            Indent(cout, 1+recursionDepth);
-            cout << "direction=" << direction << endl;
-
-            Indent(cout, 1+recursionDepth);
-            cout.precision(4);
-            cout << "refract=" << fixed << refractiveIndex;
-            cout << ", intensity=" << rayIntensity << endl;
-
-            Indent(cout, recursionDepth);
-            cout << "}" << endl;
-        }
-#endif
-
-        // Check for recursion stopping conditions.
-        // The first is an absolute upper limit on recursion,
-        // so as to avoid stack overflow crashes and to 
-        // limit computation time due to recursive branching.
         if (recursionDepth <= MAX_OPTICAL_RECURSION_DEPTH)
         {
-            // The second limit is checking for the ray path
-            // having been partially reflected/refracted until
-            // it is too weak to matter significantly for
-            // determining the associated pixel's color.
             if (IsSignificant(rayIntensity))
             {
                 if (intersection.solid == NULL)
                 {
-                    // If we get here, it means some derived class forgot to
-                    // initialize intersection.solid before appending to
-                    // the intersection list.
                     throw ImagerException("Undefined solid at intersection.");
                 }
                 const SolidObject& solid = *intersection.solid;
 
-                // Determine the optical properties at the specified
-                // point on whatever solid object the ray intersected with.
                 const Optics optics = solid.SurfaceOptics(
                     intersection.point, 
                     intersection.context
                 );
 
-                // Opacity of a surface point is the fraction 0..1
-                // of the light ray available for matte and gloss.
-                // The remainder, transparency = 1-opacity, is
-                // available for refraction and refractive reflection.
                 const double opacity = optics.GetOpacity();
                 const double transparency = 1.0 - opacity;
+                
+                Color matte(0.0,0.0,0.0);
+                Color reflection(0.0,0.0,0.0);
+                Color refraction(0.0,0.0,0.0);
+                
                 if (opacity > 0.0)
                 {
-                    // This object is at least a little bit opaque,
-                    // so calculate the part of the color caused by
-                    // matte (scattered) reflection.
+                    matte = CalculateMatte(intersection);
                     const Color matteColor =
                         opacity * 
                         optics.GetMatteColor() *
                         rayIntensity *
-                        CalculateMatte(intersection);
+                        matte;
 
                     colorSum += matteColor;
 
-#if RAYTRACE_DEBUG_POINTS
-                    if (activeDebugPoint)
-                    {
-                        using namespace std;
-
-                        Indent(cout, recursionDepth);
-                        cout << "matteColor=" << matteColor;
-                        cout << ", colorSum=" << colorSum;
-                        cout << endl;
-                    }
-#endif
                 }
 
                 double refractiveReflectionFactor = 0.0;
                 if (transparency > 0.0)
                 {
-                    // This object is at least a little bit transparent,
-                    // so calculate refraction of the ray passing through 
-                    // the point. The refraction calculation also tells us
-                    // how much reflection was caused by the interface 
-                    // between the current ray medium and the medium it
-                    // is now passing into.  This reflection factor will
-                    // be combined with glossy reflection to determine
-                    // total reflection below.
-                    // Note that only the 'transparent' part of the light
-                    // is available for refraction and refractive reflection.
-
-                    colorSum += CalculateRefraction(
+                    refraction = CalculateRefraction(
                         intersection, 
                         direction,
                         refractiveIndex,
@@ -231,55 +171,31 @@ namespace Imager
                         recursionDepth,
                         refractiveReflectionFactor  // output parameter
                     );
+
+                    colorSum += refraction;
                 }
 
-                // There are two sources of shiny reflection
-                // that need to be considered together:
-                // 1. Reflection caused by refraction.
-                // 2. The glossy part.
-
-                // The refractive part causes reflection of all
-                // colors equally.  Each color component is 
-                // diminished based on transparency (the part
-                // of the ray left available to refraction in 
-                // the first place).
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;
 
-                // Add in the glossy part of the reflection, which
-                // can be different for red, green, and blue.
-                // It is diminished to the part of the ray that
-                // was not available for refraction.
                 reflectionColor += opacity * optics.GetGlossColor();
 
-                // Multiply by the accumulated intensity of the 
-                // ray as it has traveled around the scene.
                 reflectionColor *= rayIntensity;
 
                 if (IsSignificant(reflectionColor))
                 {
-                    const Color matteColor = CalculateReflection(
+
+                    reflection = CalculateReflection(
                         intersection,
                         direction,
                         refractiveIndex,
                         reflectionColor,
                         recursionDepth);
 
-                    colorSum += matteColor;
+                    colorSum += reflection;
                 }
             }
         }
-
-#if RAYTRACE_DEBUG_POINTS
-        if (activeDebugPoint)
-        {
-            using namespace std;
-
-            Indent(cout, recursionDepth);
-            cout << "CalculateLighting[" << recursionDepth << "] returning ";
-            cout << colorSum << endl;
-        }
-#endif
 
         return colorSum;
     }
