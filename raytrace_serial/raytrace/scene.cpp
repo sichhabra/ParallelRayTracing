@@ -38,20 +38,22 @@
 #include <cilk/cilk.h>
 using namespace std;
 
+int count=0;
+
 namespace Imager
 {
     // Empties out the solidObjectList and destroys/frees 
     // the SolidObjects that were in it.
     void Scene::ClearSolidObjectList()
     {
-        SolidObjectList::iterator iter = solidObjectList.begin();
+        /*SolidObjectList::iterator iter = solidObjectList.begin();
         SolidObjectList::iterator end  = solidObjectList.end();
         for (; iter != end; ++iter)
         {
             delete *iter;
             *iter = NULL;
         }
-        solidObjectList.clear();
+        solidObjectList.clear();*/
     }
 
     // A limit to how deeply in recursion CalculateLighting may go
@@ -149,12 +151,13 @@ namespace Imager
 
                 if (opacity > 0.0)
                 {
-                    matte = CalculateMatte(intersection);
+                    matte = cilk_spawn CalculateMatte(intersection);
                 }
-
+                   
 
                 double refractiveReflectionFactor = 0.0;
                 if (transparency > 0.0)
+                
                 {
                     refraction = CalculateRefraction(
                             intersection, 
@@ -167,6 +170,7 @@ namespace Imager
 
                 }
 
+
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;
 
@@ -177,7 +181,7 @@ namespace Imager
                 if (IsSignificant(reflectionColor))
                 {
 
-                    reflection = cilk_spawn CalculateReflection(
+                    reflection = CalculateReflection(
                             intersection,
                             direction,
                             refractiveIndex,
@@ -185,8 +189,8 @@ namespace Imager
                             recursionDepth);
 
                 }
-
                 cilk_sync;
+
                 const Color matteColor =
                     opacity * 
                     optics.GetMatteColor() *

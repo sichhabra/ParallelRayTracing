@@ -641,7 +641,7 @@ void ChessBoardTest()
 
 void SerialTest(){
 using namespace Imager;
-    /*Scene scene(Color(0.0,0.0,0.0));
+    Scene scene(Color(0.0,0.0,0.0));
     auto start = std::chrono::steady_clock::now();
     Cuboid *cuboid = getCuboid();
     Spheroid *spheroid = getSpheroid();
@@ -664,8 +664,8 @@ using namespace Imager;
     auto end = std::chrono::steady_clock::now();
     double time = (end - start) / std::chrono::milliseconds(1);
     time = (time / 1000.0);
-    std::cout <<"Serial Time "<<time<<endl;*/
-    MultipleSphereTest();
+    std::cout <<"Serial Time "<<time<<endl;
+    //MultipleSphereTest();
 }
 
 int main(int argc, const char *argv[])
