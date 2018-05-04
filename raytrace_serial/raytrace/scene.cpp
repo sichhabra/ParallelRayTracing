@@ -46,14 +46,14 @@ namespace Imager
     // the SolidObjects that were in it.
     void Scene::ClearSolidObjectList()
     {
-        /*SolidObjectList::iterator iter = solidObjectList.begin();
+        SolidObjectList::iterator iter = solidObjectList.begin();
         SolidObjectList::iterator end  = solidObjectList.end();
         for (; iter != end; ++iter)
         {
             delete *iter;
             *iter = NULL;
         }
-        solidObjectList.clear();*/
+        solidObjectList.clear();
     }
 
     // A limit to how deeply in recursion CalculateLighting may go
@@ -216,6 +216,7 @@ namespace Imager
         // Add up all the color components to create a 
         // composite color value.
         Color colorSum(0.0, 0.0, 0.0);
+        mutex colr;
 
         // Iterate through all of the light sources.
         //LightSourceList::const_iterator iter = lightSourceList.begin();
@@ -255,7 +256,7 @@ namespace Imager
                 {
                     const double intensity = 
                         incidence / direction.MagnitudeSquared();
-
+                    
                     colorSum += intensity * source.color;
                 }
             }
