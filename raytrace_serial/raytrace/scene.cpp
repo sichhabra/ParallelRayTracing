@@ -58,7 +58,7 @@ namespace Imager
 
     // A limit to how deeply in recursion CalculateLighting may go
     // before it gives up, so as to avoid call stack overflow.
-    const int MAX_OPTICAL_RECURSION_DEPTH = 20;
+    const int MAX_OPTICAL_RECURSION_DEPTH = 10;
 
     // A limit to how weak the red, green, or blue intensity of
     // a light ray may be after recursive calls from multiple
@@ -113,6 +113,7 @@ namespace Imager
                 // this ray of light.
                 throw AmbiguousIntersectionException();
         }
+        //cout<<"END OF RECURSION: "<<(count++)<<endl;
     }
 
     // Determines the color of an intersection, 
@@ -135,6 +136,7 @@ namespace Imager
                 {
                     throw ImagerException("Undefined solid at intersection.");
                 }
+                //cout<<"At the start of Calculate Lightning : "<<(count++)<<endl;
                 const SolidObject& solid = *intersection.solid;
 
                 const Optics optics = solid.SurfaceOptics(
@@ -156,8 +158,7 @@ namespace Imager
                    
 
                 double refractiveReflectionFactor = 0.0;
-                if (transparency > 0.0)
-                
+                if (transparency > 0.0) 
                 {
                     refraction = CalculateRefraction(
                             intersection, 
@@ -170,7 +171,8 @@ namespace Imager
 
                 }
 
-
+                cilk_sync;
+                
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;
 
@@ -189,7 +191,6 @@ namespace Imager
                             recursionDepth);
 
                 }
-                cilk_sync;
 
                 const Color matteColor =
                     opacity * 
@@ -200,6 +201,7 @@ namespace Imager
                 colorSum += matteColor;
                 colorSum += refraction;
                 colorSum += reflection;
+                //cout<<"At the end of Calculate Lightning : "<<(count++)<<endl;
             }
         }
 
@@ -216,7 +218,6 @@ namespace Imager
         // Add up all the color components to create a 
         // composite color value.
         Color colorSum(0.0, 0.0, 0.0);
-        mutex colr;
 
         // Iterate through all of the light sources.
         //LightSourceList::const_iterator iter = lightSourceList.begin();
@@ -723,7 +724,7 @@ namespace Imager
         auto end1 = std::chrono::steady_clock::now();
         double time = (end1 - start1) / std::chrono::milliseconds(1);
         time = (time / 1000.0);
-        std::cout <<"Loop 1 Time "<<time<<endl;
+        //std::cout <<"Loop 1 Time "<<time<<endl;
 
         // Go back and "heal" ambiguous pixels as best we can.
         //PixelList::const_iterator iter = ambiguousPixelList.begin();
@@ -787,7 +788,7 @@ namespace Imager
         end1 = std::chrono::steady_clock::now();
         time = (end1 - start1) / std::chrono::milliseconds(1);
         time = (time / 1000.0);
-        std::cout <<"Loop 2 Time "<<time<<endl;
+        //std::cout <<"Loop 2 Time "<<time<<endl;
 
         // Write the PNG file
         const unsigned error = lodepng::encode(
@@ -812,20 +813,26 @@ namespace Imager
     // composer of a scene to decide which of multiple overlapping
     // objects should control the index of refraction for any
     // overlapping volumes of space.
-    const SolidObject* Scene::PrimaryContainer(const Vector& point) const
+    SolidObject* Scene::PrimaryContainer(const Vector& point) const
     {
-        SolidObjectList::const_iterator iter = solidObjectList.begin();
+        //SolidObjectList::const_iterator iter = solidObjectList.begin();
         SolidObjectList::const_iterator end  = solidObjectList.end();
-        for (; iter != end; ++iter)
+        
+        mutex sold;
+        SolidObject *result = NULL;
+        
+        cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
-            const SolidObject* solid = *iter;
+            SolidObject* solid = *iter;
             if (solid->Contains(point))
             {
-                return solid;
+                sold.lock();
+                result = solid;
+                sold.unlock();
             }
         }
 
-        return NULL;
+        return result;
     }
 
     void Scene::ResolveAmbiguousPixel(
@@ -847,16 +854,19 @@ namespace Imager
         // Look for surrounding unambiguous pixels.
         // Average their color values together.
         Color colorSum(0.0, 0.0, 0.0);
+        mutex colr;
         int numFound = 0;
-        for (size_t si = iMin; si <= iMax; ++si)
+        cilk_for (size_t si = iMin; si <= iMax; ++si)
         {
             for (size_t sj = jMin; sj <= jMax; ++sj)
             {
                 const PixelData& pixel = buffer.Pixel(si, sj);
                 if (!pixel.isAmbiguous)
                 {
+                    colr.lock();
                     ++numFound;
                     colorSum += pixel.color;
+                    colr.unlock();
                 }
             }
         }

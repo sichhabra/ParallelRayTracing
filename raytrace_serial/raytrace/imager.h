@@ -30,7 +30,7 @@
 #include <cmath>
 #include "algebra.h"
 
-#define RAYTRACE_DEBUG_POINTS 0
+#define RAYTRACE_DEBUG_POINTS 1
 
 namespace Imager
 {
@@ -1558,7 +1558,7 @@ namespace Imager
             int recursionDepth,
             double& outReflectionFactor) const;
 
-        const SolidObject* PrimaryContainer(const Vector& point) const;
+        SolidObject* PrimaryContainer(const Vector& point) const;
 
         double PolarizedReflection(
             double n1,              // source material's index of refraction
