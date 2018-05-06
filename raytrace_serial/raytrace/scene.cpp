@@ -583,15 +583,18 @@ namespace Imager
     {
         // Build a list of all intersections from all objects.
         cachedIntersectionList.clear();     // empty any previous contents
-        SolidObjectList::const_iterator iter = solidObjectList.begin();
+        //SolidObjectList::const_iterator iter = solidObjectList.begin();
         SolidObjectList::const_iterator end  = solidObjectList.end();
-        for (; iter != end; ++iter)
+        mutex sold;
+        cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
+            sold.lock();
             const SolidObject& solid = *(*iter);
             solid.AppendAllIntersections(
                     vantage, 
                     direction, 
                     cachedIntersectionList);
+            sold.unlock();
         }
         return PickClosestIntersection(cachedIntersectionList, intersection);
     }
@@ -609,9 +612,11 @@ namespace Imager
         const double gapDistanceSquared = dir.MagnitudeSquared();
 
         // Iterate through all the solid objects in this scene.
-        SolidObjectList::const_iterator iter = solidObjectList.begin();
+        //SolidObjectList::const_iterator iter = solidObjectList.begin();
         SolidObjectList::const_iterator end  = solidObjectList.end();
-        for (; iter != end; ++iter)
+        bool result=true;
+        mutex res;
+        cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
             // If any object blocks the line of sight, 
             // we can return false immediately.
@@ -632,13 +637,15 @@ namespace Imager
                 {
                     // We found a surface that is definitely blocking
                     // the line of sight.  No need to keep looking!
-                    return false;
+                    res.lock();
+                    result = false;
+                    res.unlock();
                 }
             }
         }
 
         // We would not find any solid object that blocks the line of sight.
-        return true;  
+        return result;  
     }
 
     // Generate an image of the scene and write it to the 
