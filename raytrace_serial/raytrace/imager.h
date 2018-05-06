@@ -29,6 +29,9 @@
 #include <vector>
 #include <cmath>
 #include "algebra.h"
+#include <cilk/cilk.h>
+#include <mutex>
+using namespace std;
 
 #define RAYTRACE_DEBUG_POINTS 1
 
@@ -1717,20 +1720,27 @@ namespace Imager
         double MaxColorValue() const
         {
             double max = 0.0;
-            for (size_t i=0; i < numPixels; ++i) 
+            mutex mx;
+            cilk_for (size_t i=0; i < numPixels; ++i) 
             {
                 array[i].color.Validate();
                 if (array[i].color.red > max)
                 {
+                    mx.lock();
                     max = array[i].color.red;
+                    mx.unlock();
                 }
                 if (array[i].color.green > max)
                 {
+                    mx.lock();
                     max = array[i].color.green;
+                    mx.unlock();
                 }
                 if (array[i].color.blue > max)
                 {
+                    mx.lock();
                     max = array[i].color.blue;
+                    mx.unlock();
                 }
             }
             if (max == 0.0)
