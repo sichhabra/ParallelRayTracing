@@ -27,6 +27,9 @@
 */
 
 #include "imager.h"
+#include <cilk/cilk.h>
+#include <mutex>
+using namespace std;
 
 namespace Imager
 {
@@ -49,10 +52,11 @@ namespace Imager
 
             int enterCount = 0;     // number of times we enter the solid
             int exitCount  = 0;     // number of times we exit the solid
+            mutex cnt;
 
-            IntersectionList::const_iterator iter = enclosureList.begin();
+            //IntersectionList::const_iterator iter = enclosureList.begin();
             IntersectionList::const_iterator end  = enclosureList.end();
-            for (; iter != end; ++iter)
+            cilk_for (IntersectionList::const_iterator iter = enclosureList.begin(); iter != end; ++iter)
             {
                 const Intersection& intersection = *iter;
 
@@ -66,11 +70,15 @@ namespace Imager
                 // If it is negative, we are entering the solid.  
                 if (dotprod > EPSILON)
                 {
+                    cnt.lock();
                     ++exitCount;
+                    cnt.unlock();
                 }
                 else if (dotprod < -EPSILON)
                 {
+                    cnt.lock();
                     ++enterCount;
+                    cnt.unlock();
                 }
                 else
                 {
@@ -78,7 +86,7 @@ namespace Imager
                     // something odd is going on because we 
                     // should not have found an intersection
                     // with a plane in the first place.
-                    throw ImagerException("Ambiguous transition.");
+                    // throw ImagerException("Ambiguous transition.");
                 }
             }
 
