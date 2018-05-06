@@ -46,9 +46,9 @@ namespace Imager
     // the SolidObjects that were in it.
     void Scene::ClearSolidObjectList()
     {
-        SolidObjectList::iterator iter = solidObjectList.begin();
+        //SolidObjectList::iterator iter = solidObjectList.begin();
         SolidObjectList::iterator end  = solidObjectList.end();
-        for (; iter != end; ++iter)
+        cilk_for (SolidObjectList::iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
             delete *iter;
             *iter = NULL;
@@ -411,14 +411,18 @@ namespace Imager
         // positive numbers.
         double maxAlignment = -0.0001;  // any negative number works as a flag
         Vector refractDir;
-        for (int i=0; i < numSolutions; ++i)
+        mutex pos;
+
+        cilk_for (int i=0; i < numSolutions; ++i)
         {
             Vector refractAttempt = dirUnit + k[i]*intersection.surfaceNormal;
             double alignment = DotProduct(dirUnit, refractAttempt);
             if (alignment > maxAlignment)
             {
+                pos.lock();
                 maxAlignment = alignment;
                 refractDir = refractAttempt;
+                pos.unlock();
             }
         }
 
