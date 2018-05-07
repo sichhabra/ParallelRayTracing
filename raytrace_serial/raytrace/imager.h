@@ -34,6 +34,7 @@
 using namespace std;
 
 #define RAYTRACE_DEBUG_POINTS 1
+static mutex cil2;
 
 namespace Imager
 {
@@ -465,8 +466,10 @@ namespace Imager
             const Vector& direction, 
             Intersection &intersection) const
         {
+            cil2.lock();
             cachedIntersectionList.clear();
             AppendAllIntersections(vantage, direction, cachedIntersectionList);
+            cil2.unlock();
             return PickClosestIntersection(cachedIntersectionList, intersection);
         }
 

@@ -153,7 +153,7 @@ namespace Imager
 
                 if (opacity > 0.0)
                 {
-                    matte = /*cilk_spawn*/ CalculateMatte(intersection);
+                    matte = cilk_spawn CalculateMatte(intersection);
                 }
                    
 
@@ -171,7 +171,7 @@ namespace Imager
 
                 }
 
-                //cilk_sync;
+                cilk_sync;
                 
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;
@@ -582,20 +582,19 @@ namespace Imager
             Intersection& intersection) const
     {
         // Build a list of all intersections from all objects.
+        cil2.lock();
         cachedIntersectionList.clear();     // empty any previous contents
         //SolidObjectList::const_iterator iter = solidObjectList.begin();
         SolidObjectList::const_iterator end  = solidObjectList.end();
-        mutex sold;
-        cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
+        for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
-            sold.lock();
             const SolidObject& solid = *(*iter);
             solid.AppendAllIntersections(
                     vantage, 
                     direction, 
                     cachedIntersectionList);
-            sold.unlock();
         }
+        cil2.unlock();
         return PickClosestIntersection(cachedIntersectionList, intersection);
     }
 
