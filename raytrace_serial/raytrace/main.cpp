@@ -544,6 +544,47 @@ void MultipleSphereTest()
     std::cout << "Wrote " << filename << std::endl;
 }
 
+void MultipleSphereTest1()
+{
+    using namespace Imager;
+
+    // Put spheres with different optical properties next to each other.
+    Scene scene(Color(0.0, 0.0, 0.0));
+
+    Sphere* shinySphere = new Sphere(Vector(-3.0, 0.0, -50.0), 0.7);
+    shinySphere->SetMatteGlossBalance(
+            0.3,    // 30% of reflection is shiny, 70% is dull
+            Color(1.0, 1.0, 1.0),   // matte color is white
+            Color(1.0, 1.0, 1.0)    // gloss color is white
+            );
+    shinySphere->SetOpacity(0.6);
+    scene.AddSolidObject(shinySphere);
+
+    Sphere* matteSphere = new Sphere(Vector(-1.5, 0.0, -50.0), 0.5);
+    matteSphere->SetFullMatte(Color(0.6, 0.6, 0.9));
+    matteSphere->SetOpacity(1.0);
+    scene.AddSolidObject(matteSphere);
+
+    Sphere* matteSphere1 = new Sphere(Vector(+0.5, 0.0, -50.0), 0.5);
+    matteSphere1->SetFullMatte(Color(0.6, 0.6, 0.9));
+    matteSphere1->SetOpacity(1.0);
+    scene.AddSolidObject(matteSphere1);
+    
+    Sphere* matteSphere2 = new Sphere(Vector(+1.5, 0.0, -50.0), 0.5);
+    matteSphere2->SetFullMatte(Color(0.6, 0.6, 0.9));
+    matteSphere2->SetOpacity(1.0);
+    scene.AddSolidObject(matteSphere2);
+    
+    scene.AddLightSource(LightSource(Vector(-45.0, +10.0, +50.0), Color(0.7, 0.7, 0.0, 0.7)));
+    scene.AddLightSource(LightSource(Vector( +5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5)));
+    scene.AddLightSource(LightSource(Vector(+45.0, -10.0, +40.0), Color(0.1, 0.2, 0.1, 0.5)));
+    scene.AddLightSource(LightSource(Vector( -5.0, +90.0, -40.0), Color(0.2, 0.5, 0.4, 0.5)));
+
+    const char* filename = "multisphere.png";
+    scene.SaveImage(filename, 700, 500, 10.0, 2);
+    std::cout << "Wrote " << filename << std::endl;
+}
+
 Imager::Sphere *getShinySphere(){
     using namespace Imager;
 
@@ -665,7 +706,12 @@ using namespace Imager;
     double time = (end - start) / std::chrono::milliseconds(1);
     time = (time / 1000.0);
     std::cout <<"Serial Time "<<time<<endl;*/
-    MultipleSphereTest();
+    auto start = std::chrono::steady_clock::now();
+    MultipleSphereTest1();
+    auto end = std::chrono::steady_clock::now();
+    double time = (end - start) / std::chrono::milliseconds(1);
+    time = (time / 1000.0);
+    std::cout <<"Parallel Time "<<time<<endl;
 }
 
 int main(int argc, const char *argv[])

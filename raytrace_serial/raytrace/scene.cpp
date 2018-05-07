@@ -58,7 +58,7 @@ namespace Imager
 
     // A limit to how deeply in recursion CalculateLighting may go
     // before it gives up, so as to avoid call stack overflow.
-    const int MAX_OPTICAL_RECURSION_DEPTH = 10;
+    const int MAX_OPTICAL_RECURSION_DEPTH = 20;
 
     // A limit to how weak the red, green, or blue intensity of
     // a light ray may be after recursive calls from multiple
