@@ -153,7 +153,7 @@ namespace Imager
 
                 if (opacity > 0.0)
                 {
-                    matte = cilk_spawn CalculateMatte(intersection);
+                    matte = /*cilk_spawn*/ CalculateMatte(intersection);
                 }
                    
 
@@ -171,7 +171,7 @@ namespace Imager
 
                 }
 
-                cilk_sync;
+                //cilk_sync;
                 
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;

@@ -586,6 +586,8 @@ void MultipleSphereTest1()
     scene.AddLightSource(LightSource(Vector( +5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5)));
     scene.AddLightSource(LightSource(Vector(+45.0, -10.0, +40.0), Color(0.1, 0.2, 0.1, 0.5)));
     scene.AddLightSource(LightSource(Vector( -5.0, +90.0, -40.0), Color(0.2, 0.5, 0.4, 0.5)));
+    scene.AddLightSource(LightSource(Vector( +25.0, +80.0, -20.0), Color(0.1, 0.8, 0.9, 0.5)));
+    scene.AddLightSource(LightSource(Vector( -25.0, -90.0, -20.0), Color(0.3, 0.5, 0.4, 0.5)));
 
     const char* filename = "multisphere.png";
     scene.SaveImage(filename, 700, 500, 10.0, 2);
