@@ -579,6 +579,9 @@ void MultipleSphereTest1()
     matteSphere2->SetOpacity(1.0);
     scene.AddSolidObject(matteSphere2);
     
+    Saturn *saturn = getSaturn();
+    scene.AddSolidObject(saturn);
+    
     scene.AddLightSource(LightSource(Vector(-45.0, +10.0, +50.0), Color(0.7, 0.7, 0.0, 0.7)));
     scene.AddLightSource(LightSource(Vector( +5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5)));
     scene.AddLightSource(LightSource(Vector(+45.0, -10.0, +40.0), Color(0.1, 0.2, 0.1, 0.5)));
