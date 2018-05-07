@@ -551,7 +551,7 @@ void MultipleSphereTest1()
     // Put spheres with different optical properties next to each other.
     Scene scene(Color(0.0, 0.0, 0.0));
 
-    Sphere* shinySphere = new Sphere(Vector(-3.0, 0.0, -50.0), 0.7);
+    Sphere* shinySphere = new Sphere(Vector(-2.2, 0.0, -50.0), 1.0);
     shinySphere->SetMatteGlossBalance(
             0.3,    // 30% of reflection is shiny, 70% is dull
             Color(1.0, 1.0, 1.0),   // matte color is white
@@ -560,17 +560,17 @@ void MultipleSphereTest1()
     shinySphere->SetOpacity(0.6);
     scene.AddSolidObject(shinySphere);
 
-    Sphere* matteSphere = new Sphere(Vector(-1.5, 0.0, -50.0), 0.5);
+    Sphere* matteSphere = new Sphere(Vector(-0.2, 0.0, -50.0), 0.7);
     matteSphere->SetFullMatte(Color(0.6, 0.6, 0.9));
     matteSphere->SetOpacity(1.0);
     scene.AddSolidObject(matteSphere);
 
-    Sphere* matteSphere1 = new Sphere(Vector(+0.5, 0.0, -50.0), 0.5);
+    Sphere* matteSphere1 = new Sphere(Vector(+1.3, 0.0, -50.0), 0.5);
     matteSphere1->SetFullMatte(Color(0.6, 0.6, 0.9));
     matteSphere1->SetOpacity(1.0);
     scene.AddSolidObject(matteSphere1);
     
-    Sphere* matteSphere2 = new Sphere(Vector(+1.5, 0.0, -50.0), 0.5);
+    Sphere* matteSphere2 = new Sphere(Vector(+2.4, 0.0, -50.0), 0.3);
     matteSphere2->SetFullMatte(Color(0.6, 0.6, 0.9));
     matteSphere2->SetOpacity(1.0);
     scene.AddSolidObject(matteSphere2);
