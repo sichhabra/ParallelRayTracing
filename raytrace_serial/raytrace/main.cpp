@@ -560,10 +560,14 @@ void MultipleSphereTest1()
     shinySphere->SetOpacity(0.6);
     scene.AddSolidObject(shinySphere);
 
-    Sphere* matteSphere = new Sphere(Vector(-0.2, 0.0, -50.0), 0.7);
-    matteSphere->SetFullMatte(Color(0.6, 0.6, 0.9));
-    matteSphere->SetOpacity(1.0);
-    scene.AddSolidObject(matteSphere);
+    Sphere* shinySphere1 = new Sphere(Vector(-0.2, 0.0, -50.0), 0.7);
+    shinySphere1->SetMatteGlossBalance(
+            0.3,    // 30% of reflection is shiny, 70% is dull
+            Color(1.0, 1.0, 1.0),   // matte color is white
+            Color(1.0, 1.0, 1.0)    // gloss color is white
+            );
+    shinySphere1->SetOpacity(0.6);
+    scene.AddSolidObject(shinySphere1);
 
     Sphere* matteSphere1 = new Sphere(Vector(+1.3, 0.0, -50.0), 0.5);
     matteSphere1->SetFullMatte(Color(0.6, 0.6, 0.9));

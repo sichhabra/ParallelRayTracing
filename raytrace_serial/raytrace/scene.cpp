@@ -58,7 +58,7 @@ namespace Imager
 
     // A limit to how deeply in recursion CalculateLighting may go
     // before it gives up, so as to avoid call stack overflow.
-    const int MAX_OPTICAL_RECURSION_DEPTH = 20;
+    const int MAX_OPTICAL_RECURSION_DEPTH = 10;
 
     // A limit to how weak the red, green, or blue intensity of
     // a light ray may be after recursive calls from multiple
@@ -153,7 +153,7 @@ namespace Imager
 
                 if (opacity > 0.0)
                 {
-                    matte = cilk_spawn CalculateMatte(intersection);
+                    matte = /*cilk_spawn*/ CalculateMatte(intersection);
                 }
                    
 
@@ -171,7 +171,7 @@ namespace Imager
 
                 }
 
-                cilk_sync;
+                //cilk_sync;
                 
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;
