@@ -585,6 +585,7 @@ namespace Imager
         // Build a list of all intersections from all objects.
         cil2.lock();
         cachedIntersectionList.clear();     // empty any previous contents
+        cil2.unlock();
         //SolidObjectList::const_iterator iter = solidObjectList.begin();
         SolidObjectList::const_iterator end  = solidObjectList.end();
         for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
@@ -595,7 +596,6 @@ namespace Imager
                     direction, 
                     cachedIntersectionList);
         }
-        cil2.unlock();
         return PickClosestIntersection(cachedIntersectionList, intersection);
     }
 
@@ -788,12 +788,15 @@ namespace Imager
             {
                 //Color sum = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor,largePixelsWide,largePixelsHigh);
                 Color sum(0.0,0.0,0.0);
-                for(int di=0;di<antiAliasFactor;di++){
+                mutex colr;
+                cilk_for(int di=0;di<antiAliasFactor;di++){
                     for(int dj=0;dj<antiAliasFactor;dj++){
                         int x=antiAliasFactor*i + di;
                         int y=antiAliasFactor*j + dj;
                         Color temp(red[x][y],green[x][y],blue[x][y],1.0);
+                        colr.lock();
                         sum += temp;
+                        colr.unlock();
                     }
                 }
             sum /= patchSize;
