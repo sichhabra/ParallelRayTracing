@@ -846,7 +846,7 @@ SolidObject* Scene::PrimaryContainer(const Vector& point) const
     mutex sold;
     SolidObject *result = NULL;
 
-    for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
+    cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
     {
         SolidObject* solid = *iter;
         if (solid->Contains(point))
