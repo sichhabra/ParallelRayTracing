@@ -881,7 +881,7 @@ void Scene::ResolveAmbiguousPixel(
     Color colorSum(0.0, 0.0, 0.0);
     mutex colr;
     int numFound = 0;
-    for (size_t si = iMin; si <= iMax; ++si)
+    cilk_for (size_t si = iMin; si <= iMax; ++si)
     {
         for (size_t sj = jMin; sj <= jMax; ++sj)
         {
