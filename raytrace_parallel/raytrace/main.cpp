@@ -716,7 +716,7 @@ using namespace Imager;
     time = (time / 1000.0);
     std::cout <<"Serial Time "<<time<<endl;*/
     auto start = std::chrono::steady_clock::now();
-    MultipleSphereTest1();
+    MultipleSphereTest();
     auto end = std::chrono::steady_clock::now();
     double time = (end - start) / std::chrono::milliseconds(1);
     time = (time / 1000.0);
