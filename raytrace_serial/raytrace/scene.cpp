@@ -786,20 +786,7 @@ namespace Imager
         {
             for (size_t i=0; i < pixelsWide; ++i)
             {
-                Color sum(0.0, 0.0, 0.0);
-                mutex colr;
-                Color temp = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor);
-                for (size_t di=0; di < antiAliasFactor; ++di)
-                {
-                    for (size_t dj=0; dj < antiAliasFactor; ++dj)
-                    {
-                        colr.lock();
-                        sum += buffer.Pixel(
-                                antiAliasFactor*i + di, 
-                                antiAliasFactor*j + dj).color;
-                        colr.unlock();
-                    }
-                }
+                Color sum = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor);
                 sum /= patchSize;
 
                 // Convert to integer red, green, blue, alpha values,
