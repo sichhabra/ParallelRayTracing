@@ -540,7 +540,7 @@ void MultipleSphereTest()
     scene.AddLightSource(LightSource(Vector( -5.0, +90.0, -40.0), Color(0.5, 0.5, 1.5, 0.5)));
 
     const char* filename = "multisphere.png";
-    scene.SaveImage(filename, 400, 300, 10.0, 1);
+    scene.SaveImage(filename, 400, 300, 10.0, 2);
     std::cout << "Wrote " << filename << std::endl;
 }
 
