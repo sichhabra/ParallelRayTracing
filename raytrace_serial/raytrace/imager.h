@@ -1724,7 +1724,7 @@ namespace Imager
         {
             double max = 0.0;
             mutex mx;
-            cilk_for (size_t i=0; i < numPixels; ++i) 
+            for (size_t i=0; i < numPixels; ++i) 
             {
                 array[i].color.Validate();
                 if (array[i].color.red > max)

@@ -36,6 +36,7 @@
 #include <chrono>
 #include <mutex>
 #include <cilk/cilk.h>
+#include "antialias.h"
 using namespace std;
 
 int count=0;
@@ -155,7 +156,7 @@ namespace Imager
                 {
                     matte = /*cilk_spawn*/ CalculateMatte(intersection);
                 }
-                   
+
 
                 double refractiveReflectionFactor = 0.0;
                 if (transparency > 0.0) 
@@ -172,7 +173,7 @@ namespace Imager
                 }
 
                 //cilk_sync;
-                
+
                 Color reflectionColor (1.0, 1.0, 1.0);
                 reflectionColor *= transparency * refractiveReflectionFactor;
 
@@ -257,7 +258,7 @@ namespace Imager
                 {
                     const double intensity = 
                         incidence / direction.MagnitudeSquared();
-                    
+
                     colorSum += intensity * source.color;
                 }
             }
@@ -767,13 +768,28 @@ namespace Imager
 
         start1 = std::chrono::steady_clock::now();
 
+        double **red=new double*[largePixelsWide];
+        double **blue=new double*[largePixelsWide];
+        double **green=new double*[largePixelsWide];
+
+        for(int i=0;i<largePixelsWide;i++){
+            red[i]=new double[largePixelsHigh];
+            blue[i]=new double[largePixelsHigh];
+            green[i]=new double[largePixelsHigh];
+            for(int j=0;j<largePixelsHigh;j++){
+                red[i][j]=buffer.Pixel(i,j).color.red;
+                blue[i][j]=buffer.Pixel(i,j).color.blue;
+                green[i][j]=buffer.Pixel(i,j).color.green;
+            }
+        }
         for (size_t j=0; j < pixelsHigh; ++j)
         {
             for (size_t i=0; i < pixelsWide; ++i)
             {
                 Color sum(0.0, 0.0, 0.0);
                 mutex colr;
-                cilk_for (size_t di=0; di < antiAliasFactor; ++di)
+                Color temp = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor);
+                for (size_t di=0; di < antiAliasFactor; ++di)
                 {
                     for (size_t dj=0; dj < antiAliasFactor; ++dj)
                     {
@@ -827,10 +843,10 @@ namespace Imager
     {
         //SolidObjectList::const_iterator iter = solidObjectList.begin();
         SolidObjectList::const_iterator end  = solidObjectList.end();
-        
+
         mutex sold;
         SolidObject *result = NULL;
-        
+
         cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
             SolidObject* solid = *iter;
