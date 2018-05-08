@@ -786,114 +786,123 @@ namespace Imager
         {
             for (size_t i=0; i < pixelsWide; ++i)
             {
-                Color sum = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor);
-                sum /= patchSize;
-
-                // Convert to integer red, green, blue, alpha values,
-                // all of which must be in the range 0..255.
-                rgbaBuffer[rgbaIndex++] = ConvertPixelValue(sum.red,   max);
-                rgbaBuffer[rgbaIndex++] = ConvertPixelValue(sum.green, max);
-                rgbaBuffer[rgbaIndex++] = ConvertPixelValue(sum.blue,  max);
-                rgbaBuffer[rgbaIndex++] = OPAQUE_ALPHA_VALUE;
-            }
-        }
-
-        end1 = std::chrono::steady_clock::now();
-        time = (end1 - start1) / std::chrono::milliseconds(1);
-        time = (time / 1000.0);
-        //std::cout <<"Loop 2 Time "<<time<<endl;
-
-        // Write the PNG file
-        const unsigned error = lodepng::encode(
-                outPngFileName, 
-                rgbaBuffer, 
-                pixelsWide, 
-                pixelsHigh);
-
-        // If there was an encoding error, throw an exception.
-        if (error != 0)
-        {
-            std::string message = "PNG encoder error: ";
-            message += lodepng_error_text(error);
-            throw ImagerException(message.c_str());
-        }
-    }
-
-    // The following function searches through all solid objects
-    // for the first solid (if any) that contains the given point.
-    // In the case of ties, the solid that was inserted into the
-    // scene first wins.  This arbitrary convention allows the
-    // composer of a scene to decide which of multiple overlapping
-    // objects should control the index of refraction for any
-    // overlapping volumes of space.
-    SolidObject* Scene::PrimaryContainer(const Vector& point) const
-    {
-        //SolidObjectList::const_iterator iter = solidObjectList.begin();
-        SolidObjectList::const_iterator end  = solidObjectList.end();
-
-        mutex sold;
-        SolidObject *result = NULL;
-
-        cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
-        {
-            SolidObject* solid = *iter;
-            if (solid->Contains(point))
-            {
-                sold.lock();
-                result = solid;
-                sold.unlock();
-            }
-        }
-
-        return result;
-    }
-
-    void Scene::ResolveAmbiguousPixel(
-            ImageBuffer& buffer, 
-            size_t i, 
-            size_t j) const
-    {
-        // This function is called whenever SaveImage could not
-        // figure out what color to assign to a pixel, because
-        // multiple intersections were found that minimize the
-        // distance to the vantage point.
-
-        // Avoid going out of bounds with pixel coordinates.
-        const size_t iMin = (i > 0) ? (i - 1) : i;
-        const size_t iMax = (i < buffer.GetPixelsWide()-1) ? (i + 1) : i;
-        const size_t jMin = (j > 0) ? (j - 1) : j;
-        const size_t jMax = (j < buffer.GetPixelsHigh()-1) ? (j + 1) : j;
-
-        // Look for surrounding unambiguous pixels.
-        // Average their color values together.
-        Color colorSum(0.0, 0.0, 0.0);
-        mutex colr;
-        int numFound = 0;
-        cilk_for (size_t si = iMin; si <= iMax; ++si)
-        {
-            for (size_t sj = jMin; sj <= jMax; ++sj)
-            {
-                const PixelData& pixel = buffer.Pixel(si, sj);
-                if (!pixel.isAmbiguous)
-                {
-                    colr.lock();
-                    ++numFound;
-                    colorSum += pixel.color;
-                    colr.unlock();
+                //Color sum = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor);
+                Color sum(0.0,0.0,0.0);
+                for(int di=0;di<antiAliasFactor;di++){
+                    for(int dj=0;dj<antiAliasFactor;dj++){
+                        int x=antiAliasFactor*i + di;
+                        int y=antiAliasFactor*j + dj;
+                        Color temp(red[x][y],green[x][y],blue[x][y],1.0);
+                        sum += temp;
+                    }
                 }
+            sum /= patchSize;
+
+            // Convert to integer red, green, blue, alpha values,
+            // all of which must be in the range 0..255.
+            rgbaBuffer[rgbaIndex++] = ConvertPixelValue(sum.red,   max);
+            rgbaBuffer[rgbaIndex++] = ConvertPixelValue(sum.green, max);
+            rgbaBuffer[rgbaIndex++] = ConvertPixelValue(sum.blue,  max);
+            rgbaBuffer[rgbaIndex++] = OPAQUE_ALPHA_VALUE;
+        }
+    }
+
+    end1 = std::chrono::steady_clock::now();
+    time = (end1 - start1) / std::chrono::milliseconds(1);
+    time = (time / 1000.0);
+    //std::cout <<"Loop 2 Time "<<time<<endl;
+
+    // Write the PNG file
+    const unsigned error = lodepng::encode(
+            outPngFileName, 
+            rgbaBuffer, 
+            pixelsWide, 
+            pixelsHigh);
+
+    // If there was an encoding error, throw an exception.
+    if (error != 0)
+    {
+        std::string message = "PNG encoder error: ";
+        message += lodepng_error_text(error);
+        throw ImagerException(message.c_str());
+    }
+}
+
+// The following function searches through all solid objects
+// for the first solid (if any) that contains the given point.
+// In the case of ties, the solid that was inserted into the
+// scene first wins.  This arbitrary convention allows the
+// composer of a scene to decide which of multiple overlapping
+// objects should control the index of refraction for any
+// overlapping volumes of space.
+SolidObject* Scene::PrimaryContainer(const Vector& point) const
+{
+    //SolidObjectList::const_iterator iter = solidObjectList.begin();
+    SolidObjectList::const_iterator end  = solidObjectList.end();
+
+    mutex sold;
+    SolidObject *result = NULL;
+
+    cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
+    {
+        SolidObject* solid = *iter;
+        if (solid->Contains(point))
+        {
+            sold.lock();
+            result = solid;
+            sold.unlock();
+        }
+    }
+
+    return result;
+}
+
+void Scene::ResolveAmbiguousPixel(
+        ImageBuffer& buffer, 
+        size_t i, 
+        size_t j) const
+{
+    // This function is called whenever SaveImage could not
+    // figure out what color to assign to a pixel, because
+    // multiple intersections were found that minimize the
+    // distance to the vantage point.
+
+    // Avoid going out of bounds with pixel coordinates.
+    const size_t iMin = (i > 0) ? (i - 1) : i;
+    const size_t iMax = (i < buffer.GetPixelsWide()-1) ? (i + 1) : i;
+    const size_t jMin = (j > 0) ? (j - 1) : j;
+    const size_t jMax = (j < buffer.GetPixelsHigh()-1) ? (j + 1) : j;
+
+    // Look for surrounding unambiguous pixels.
+    // Average their color values together.
+    Color colorSum(0.0, 0.0, 0.0);
+    mutex colr;
+    int numFound = 0;
+    cilk_for (size_t si = iMin; si <= iMax; ++si)
+    {
+        for (size_t sj = jMin; sj <= jMax; ++sj)
+        {
+            const PixelData& pixel = buffer.Pixel(si, sj);
+            if (!pixel.isAmbiguous)
+            {
+                colr.lock();
+                ++numFound;
+                colorSum += pixel.color;
+                colr.unlock();
             }
         }
-
-        if (numFound > 0)   // avoid division by zero
-        {
-            colorSum /= numFound;
-        }
-
-        // "Airbrush" out the imperfection.
-        // This is not perfect, but it looks a lot better
-        // than leaving the pixel some arbitrary color,
-        // and better than picking the wrong intersection
-        // and following it into a crazy direction.
-        buffer.Pixel(i, j).color = colorSum;
     }
+
+    if (numFound > 0)   // avoid division by zero
+    {
+        colorSum /= numFound;
+    }
+
+    // "Airbrush" out the imperfection.
+    // This is not perfect, but it looks a lot better
+    // than leaving the pixel some arbitrary color,
+    // and better than picking the wrong intersection
+    // and following it into a crazy direction.
+    buffer.Pixel(i, j).color = colorSum;
+}
 }
