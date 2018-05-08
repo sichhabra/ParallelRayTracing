@@ -414,7 +414,7 @@ namespace Imager
         Vector refractDir;
         mutex pos;
 
-        for (int i=0; i < numSolutions; ++i)
+        cilk_for (int i=0; i < numSolutions; ++i)
         {
             Vector refractAttempt = dirUnit + k[i]*intersection.surfaceNormal;
             double alignment = DotProduct(dirUnit, refractAttempt);
