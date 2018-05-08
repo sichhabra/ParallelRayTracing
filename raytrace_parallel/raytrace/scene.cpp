@@ -740,7 +740,7 @@ namespace Imager
         // Go back and "heal" ambiguous pixels as best we can.
         //PixelList::const_iterator iter = ambiguousPixelList.begin();
         PixelList::const_iterator end  = ambiguousPixelList.end();
-        for (PixelList::const_iterator iter = ambiguousPixelList.begin(); iter != end; ++iter)
+        cilk_for (PixelList::const_iterator iter = ambiguousPixelList.begin(); iter != end; ++iter)
         {
             const PixelCoordinates& p = *iter;
             ResolveAmbiguousPixel(buffer, p.i, p.j);
