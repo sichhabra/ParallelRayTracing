@@ -1,0 +1,2 @@
+nvcc -std=c++11 -c -arch=sm_20 --expt-relaxed-constexpr -Wno-deprecated-gpu-targets algebra.cu antialias.cu -w
+g++ -o raytrace algebra.o antialias.o *.cpp ../lodepng/lodepng.cpp -fcilkplus -fpermissive -std=c++11 -L/usr/local/cuda/lib64 -lcudart -w
