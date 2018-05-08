@@ -33,7 +33,7 @@ namespace Imager{
 
     Color cuda_antiAlias(double **red,double **green,double **blue,int i,int j,int antiAliasFactor,int wide,int height){
 
-        double *addr_r,*addr_g,*addr_b;
+        double *addr_r,*addr_g,*addr_b,*rr,*gg,*bb;
         double **r,**g,**b;
         cudaMallocManaged(&addr_r,4);
         cudaMallocManaged(&addr_g,4);
@@ -50,7 +50,15 @@ namespace Imager{
         cudaMemcpy(b,blue,wide*height*sizeof(double),cudaMemcpyHostToDevice);
 
         _anti_alias<<<antiAliasFactor,antiAliasFactor>>>(addr_r,addr_g,addr_b,red,green,blue,i,j,antiAliasFactor);
+
+	rr=(double*)malloc(sizeof(double));
+	gg=(double*)malloc(sizeof(double));
+	bb=(double*)malloc(sizeof(double));
+
+	cudaMemcpy(rr,addr_r,sizeof(double),cudaMemcpyDeviceToHost);
+	cudaMemcpy(gg,addr_g,sizeof(double),cudaMemcpyDeviceToHost);
+	cudaMemcpy(bb,addr_b,sizeof(double),cudaMemcpyDeviceToHost);
         
-        return Color(*addr_r,*addr_g,*addr_b);
+        return Color(*rr,*gg,*bb);
     }
 }

@@ -49,7 +49,7 @@ namespace Imager
     {
         //SolidObjectList::iterator iter = solidObjectList.begin();
         SolidObjectList::iterator end  = solidObjectList.end();
-        cilk_for (SolidObjectList::iterator iter = solidObjectList.begin(); iter != end; ++iter)
+        for (SolidObjectList::iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
             delete *iter;
             *iter = NULL;
@@ -414,7 +414,7 @@ namespace Imager
         Vector refractDir;
         mutex pos;
 
-        cilk_for (int i=0; i < numSolutions; ++i)
+        for (int i=0; i < numSolutions; ++i)
         {
             Vector refractAttempt = dirUnit + k[i]*intersection.surfaceNormal;
             double alignment = DotProduct(dirUnit, refractAttempt);
@@ -616,7 +616,7 @@ namespace Imager
         SolidObjectList::const_iterator end  = solidObjectList.end();
         bool result=true;
         mutex res;
-        cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
+        for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
         {
             // If any object blocks the line of sight, 
             // we can return false immediately.
@@ -786,7 +786,7 @@ namespace Imager
         {
             for (size_t i=0; i < pixelsWide; ++i)
             {
-                //Color sum = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor);
+                //Color sum = cuda_antiAlias(red,green,blue,i,j,antiAliasFactor,largePixelsWide,largePixelsHigh);
                 Color sum(0.0,0.0,0.0);
                 for(int di=0;di<antiAliasFactor;di++){
                     for(int dj=0;dj<antiAliasFactor;dj++){
@@ -843,7 +843,7 @@ SolidObject* Scene::PrimaryContainer(const Vector& point) const
     mutex sold;
     SolidObject *result = NULL;
 
-    cilk_for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
+    for (SolidObjectList::const_iterator iter = solidObjectList.begin(); iter != end; ++iter)
     {
         SolidObject* solid = *iter;
         if (solid->Contains(point))
@@ -878,7 +878,7 @@ void Scene::ResolveAmbiguousPixel(
     Color colorSum(0.0, 0.0, 0.0);
     mutex colr;
     int numFound = 0;
-    cilk_for (size_t si = iMin; si <= iMax; ++si)
+    for (size_t si = iMin; si <= iMax; ++si)
     {
         for (size_t sj = jMin; sj <= jMax; ++sj)
         {
