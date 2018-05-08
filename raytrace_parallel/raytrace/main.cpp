@@ -720,7 +720,7 @@ using namespace Imager;
     auto end = std::chrono::steady_clock::now();
     double time = (end - start) / std::chrono::milliseconds(1);
     time = (time / 1000.0);
-    std::cout <<"Parallel Time "<<time<<endl;
+    //std::cout <<"Parallel Time "<<time<<endl;
 }
 
 int main(int argc, const char *argv[])
